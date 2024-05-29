@@ -1,0 +1,42 @@
+@import "./color";
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: @front;
+  --el-color-primary: @pink;
+}
+
+#app {
+  height: 100%;
+  background-color: @background;
+
+  .flex-1 {
+    flex: 1;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #ffffff44;
+    border-radius: 10px;
+  }
+
+  .btn {
+    display: inline-block;
+    cursor: pointer;
+    &:hover {
+      color: @pink;
+    }
+  }
+
+  .margin-right-large {
+    margin-right: 16px;
+  }
+}
