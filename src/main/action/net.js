@@ -1,16 +1,79 @@
-const axios = require("axios");
-
-const headers = {
-  "React-Auth": "Miuzc",
-};
+import axios from "@main/config/axios";
+import fs from "fs";
+import path from "path";
+import store from "@main/data/store";
+import FormData from "form-data";
 
 export default {
+  // get请求
   "net:get": async ({ url, params, config }) => {
-    const rsp = await axios.get(url, { params, headers, ...config });
-    return rsp.data;
+    try {
+      return await axios.get(url, { params, ...config });
+    } catch (e) {
+      console.error(e);
+    }
   },
+
+  // post请求
   "net:post": async ({ url, params }) => {
-    const rsp = axios.post(url, params, { headers });
-    return rsp.data;
+    try {
+      return axios.post(url, params);
+    } catch (e) {
+      console.error(e);
+    }
+  },
+
+  // 音乐下载
+  "net:download": ({ data: filename }) => {
+    const setting = store.get("setting");
+    axios({
+      method: "get",
+      url: "/music/" + filename,
+      responseType: "stream",
+    })
+      .then(response => {
+        // 创建一个可写流来写入文件
+        const writer = fs.createWriteStream(path.resolve(setting.local, filename));
+
+        return new Promise((resolve, reject) => {
+          response.data.pipe(writer);
+          let error = null;
+          writer.on("error", err => {
+            error = err;
+            writer.close();
+            reject(err);
+          });
+          writer.on("close", () => {
+            if (!error) {
+              resolve(true);
+            }
+          });
+        });
+      })
+      .then(() => {
+        console.log("file success save to ", dest);
+      })
+      .catch(error => {
+        console.error("catch error: ", error);
+      });
+  },
+
+  // 音乐上传
+  "net:upload": ({ data: filename }) => {
+    const setting = store.get("setting");
+    const formData = new FormData();
+    const reader = fs.createReadStream(path.resolve(setting.local, filename));
+    formData.append(filename, reader);
+
+    axios({
+      method: "POST",
+      url: "/upload/music",
+      headers: {
+        "Content-Type": "multipart/form-data;",
+      },
+      data: formData,
+    }).catch(err => {
+      console.log("catch error: ", err);
+    });
   },
 };

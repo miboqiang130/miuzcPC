@@ -1,15 +1,19 @@
 <template>
-  <div id="lyric-container">
-    <div v-if="!store.lyric" class="no-lyric">无歌词</div>
-    <section v-else v-for="(item, index) in lyric" :id="'lyric-row-' + index" :key="index" :class="{ active: index === nowIndex }">{{ item.text }}</section>
+  <div id="lyric">
+    <div v-show="!store.lyric" class="no-lyric">无歌词</div>
+    <div v-show="store.lyric" class="lyric-container" ref="lyricContainer" :style="{ top: topPosition }">
+      <section v-for="(item, index) in lyric" :key="index" :class="{ active: index === nowIndex }">{{ item.text }}</section>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useStore } from "@renderer/utils/store";
 
 const store = useStore();
+
+const lyricContainer = ref(null);
 // 歌词格式化
 const lyric = computed(() => {
   const rt = [];
@@ -26,53 +30,61 @@ const lyric = computed(() => {
   });
   return rt;
 });
+
 // 当前是哪句歌词
 const nowIndex = computed(() => {
-  const rt = lyric.value.findIndex(i => i.timeStamp > store.progress) - 1;
-  return rt;
+  const index = lyric.value.findIndex(i => i.timeStamp > store.progress);
+  return (index > 0 ? index : lyric.value.length) - 1;
+});
+
+// 距离顶部
+const topPosition = computed(() => {
+  const curNode = lyricContainer.value?.childNodes[nowIndex.value + 1] || { offsetTop: 0, offsetHeight: 0 };
+  return `calc(50% - ${curNode.offsetTop + curNode.offsetHeight / 2}px)`;
 });
 </script>
 
 <style lang="less" scoped>
 @import "@renderer/style/color";
 
-#lyric-container {
+#lyric {
   position: relative;
   height: 100%;
-  padding: 20px 0;
-  overflow-y: scroll;
+  overflow-y: hidden;
   text-align: center;
-  box-sizing: border-box;
   user-select: none;
-
-  &::before,
-  &::after {
-    content: "";
-    display: block;
-    height: 50%;
-  }
-
-  > section {
-    margin: 8px 0;
-
-    &.active {
-      font-size: large;
-      font-weight: bold;
-      color: @pink;
-    }
-  }
 
   .no-lyric {
     position: absolute;
-    top: 50%;
-    left: 0;
+    top: calc(50% - 1em);
     width: 100%;
     text-align: center;
     color: @front-dark;
   }
 
-  &::-webkit-scrollbar {
-    width: 0;
+  .lyric-container {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+    transition: 400ms;
+
+    section {
+      height: 2.5rem;
+      line-height: 2.5rem;
+      transition: 200ms;
+
+      &.active {
+        font-size: large;
+        font-weight: bold;
+        color: @pink;
+      }
+    }
+
+    &::-webkit-scrollbar {
+      width: 0;
+    }
   }
 }
 </style>

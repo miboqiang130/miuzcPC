@@ -1,0 +1,84 @@
+<template>
+  <div id="setting">
+    <el-form label-width="auto" label-position="top" ref="formRef" :model="formData" :rules="{ local: [{ required: true, message: '请选择本地音乐目录' }] }">
+      <h3>本地</h3>
+      <el-form-item label="本地目录" prop="local">
+        <el-input readonly placeholder="请选择本地目录" :model-value="formData.local" :prefix-icon="FolderSvg" @click="onFileInput" />
+      </el-form-item>
+
+      <el-divider />
+      <h3>云服务</h3>
+      <el-alert type="info" show-icon class="margin-bottom-20" :closable="false">
+        <p>请先自行搭建相关云服务</p>
+      </el-alert>
+      <el-form-item label="云服务地址"><el-input v-model="formData.cloud" placeholder="请输入云服务地址，例如：http://192.168.0.1:5000" :prefix-icon="CloudSvg" /></el-form-item>
+      <el-form-item label="云服务密码"><el-input v-model="formData.cloudPw" placeholder="请输入云服务密码" type="password" :prefix-icon="PasswordSvg" /></el-form-item>
+    </el-form>
+    <div class="btns">
+      <el-button v-show="store.setting.local" text bg @click="back"> 返回 </el-button>
+      <el-button type="primary" text bg @click="save"> 保存 </el-button>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { useStore } from "@renderer/utils/store";
+import FolderSvg from "@renderer/assets/imgs/folder.svg";
+import CloudSvg from "@renderer/assets/imgs/cloud.svg";
+import PasswordSvg from "@renderer/assets/imgs/password.svg";
+
+const store = useStore();
+const router = useRouter();
+
+const formData = ref(store.setting);
+const formRef = ref(null);
+
+const onFileInput = async () => {
+  const dirs = await electronLocal.openDir();
+  if (dirs) formData.value.local = dirs[0];
+};
+
+const back = () => {
+  router.push("/Music");
+};
+
+// 保存数据
+const save = async () => {
+  if (await formRef.value.validate()) {
+    store.setting = { ...formData.value };
+    electron.exec("local:setSetting", store.setting);
+    store.getLocal();
+    store.getCloud();
+    router.push("/Music");
+  }
+};
+</script>
+
+<style lang="less" scoped>
+@import "@renderer/style/color";
+#setting {
+  height: calc(100% - 40px);
+  padding: 30px 25% 0 25%;
+  align-items: center;
+  background-color: @gray-2;
+
+  h3 {
+    color: #505050;
+  }
+
+  .margin-bottom-20 {
+    margin-bottom: 20px;
+  }
+
+  :deep(.el-input) {
+    background-color: #202020;
+  }
+
+  .btns {
+    margin-top: 10px;
+    text-align: center;
+  }
+}
+</style>

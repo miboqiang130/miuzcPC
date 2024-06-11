@@ -6,11 +6,19 @@
         <div :class="{ active: curTab === 2 }" @click="curTab = 2">当前播放</div>
       </div>
       <div class="sub-top">
-        <div v-show="curTab === 1" class="btn" @click="playAll"><PlaySvg height="16" class="icon-play" />播放全部</div>
+        <div v-show="curTab === 1" class="btn" @click="playAll">
+          <PlaySvg height="16" class="icon-play" />
+          <span>播放全部</span>
+        </div>
         <div v-show="curTab === 2" class="btn" @click="clean"><CleanSvg height="16" />清空</div>
       </div>
       <div class="bottom">
-        <MusicItem v-for="(item, index) in showMusicList" :info="item" :key="index" :index="index" @click="store.playMusic(item)" />
+        <div :class="{ curTab: curTab === 1 }">
+          <MusicItem v-for="(item, index) in store.musicList" :info="item" :key="item.name" :index="index" :curTab="curTab" />
+        </div>
+        <div :class="{ curTab: curTab === 2 }">
+          <MusicItem v-for="(item, index) in store.curMusicList" :info="item" :key="item.name" :index="index" :curTab="curTab" />
+        </div>
       </div>
     </aside>
     <main>
@@ -21,7 +29,7 @@
     <MusicCoverSvg height="60" />
     <div class="music-info flex-1">
       <div class="top">{{ store.playingMusic?.showName || "-" }}</div>
-      <div class="bottom">无</div>
+      <div class="bottom"></div>
     </div>
     <div class="controlls">
       <audio-panel :class="{ disabled: store.curMusicList.length === 0 }" />
@@ -34,9 +42,9 @@
         <el-slider vertical height="80px" v-model="volumn" :show-tooltip="false" @change="volumnChange" />
         <div class="volumn-label">{{ volumn }}</div>
       </el-popover>
-      <PlayCycleSvg v-show="playMode === 'cycle'" height="20" @click="onPlayModeChange" />
-      <PlayRandomSvg v-show="playMode === 'random'" height="20" @click="onPlayModeChange" />
-      <PlayOnceSvg v-show="playMode === 'once'" height="20" @click="onPlayModeChange" />
+      <PlayCycleSvg v-show="store.playMode === 'cycle'" height="20" @click="onPlayModeChange" />
+      <PlayRandomSvg v-show="store.playMode === 'random'" height="20" @click="onPlayModeChange" />
+      <PlayOnceSvg v-show="store.playMode === 'once'" height="20" @click="onPlayModeChange" />
     </div>
   </footer>
 </template>
@@ -57,62 +65,34 @@ import VolumnSvg from "@renderer/assets/imgs/volumn.svg";
 import CleanSvg from "@renderer/assets/imgs/clean.svg";
 
 const store = useStore();
-const playMode = ref(localStorage.getItem("playMode") || "cycle"); // 循环播放，单个播放
 const volumn = ref(Number(localStorage.getItem("volumn") || 1) * 100); // 音量
 const curTab = ref(1);
-
-// 初始化音频对象
-store.audioInit();
-
-const showMusicList = computed(() => {
-  if (curTab.value === 1) return store.musicList;
-  else if (curTab.value === 2) return store.curMusicList;
-});
-
-const onPlayModeChange = () => {
-  switch (playMode.value) {
-    case "cycle":
-      playMode.value = "random";
-      break;
-    case "random":
-      playMode.value = "once";
-      break;
-    case "once":
-      playMode.value = "cycle";
-      break;
-  }
-  localStorage.setItem("playMode", playMode.value);
-};
 
 // 播放全部
 const playAll = () => {
   store.curMusicList = [...store.musicList];
-  store.playMusic(store.curMusicList[0]);
+  store.playNext();
   curTab.value = 2;
 };
+
 // 清空
 const clean = () => {
   store.audio.src = "";
   store.curMusicList = [];
+  store.playingMusic = null;
 };
-// 播放下一首
-const playNext = () => {
-  switch (playMode.value) {
-    case "cycle":
-      playMode.value = "random";
-      break;
-    case "random":
-      playMode.value = "once";
-      break;
-    case "once":
-      playMode.value = "cycle";
-      break;
-  }
-};
+
 // 音量改变
 const volumnChange = value => {
-  localStorage.setItem("volumn", value / 100);
-  store.changeVolumn(value / 100);
+  const v = value / 100;
+  localStorage.setItem("volumn", v);
+  store.audio.volume = Number(v);
+};
+
+// 播放模式改变时
+const onPlayModeChange = () => {
+  store.playMode = { cycle: "random", random: "once", once: "cycle" }[store.playMode];
+  localStorage.setItem("playMode", store.playMode);
 };
 </script>
 
@@ -130,7 +110,7 @@ section {
     background-color: @gray-1;
 
     .top {
-      background-color: @gray-3;
+      background-color: @gray-3-5;
       padding: 8px 10px 0;
       font-family: monospace;
 
@@ -143,7 +123,7 @@ section {
         font-weight: bold;
 
         &.active {
-          background-color: @gray-1;
+          background-color: @gray-3;
           color: @pink;
         }
       }
@@ -155,6 +135,7 @@ section {
       font-size: small;
       color: white;
       line-height: 40px;
+      background-color: @gray-3;
 
       .icon {
         margin-right: 4px;
@@ -162,18 +143,32 @@ section {
       }
 
       .icon-play {
-        padding: 0 8px 2px 7px;
+        padding: 2px 8px 3px 7px;
         background-color: @pink;
-        vertical-align: middle;
+        vertical-align: text-top;
         border-radius: 10px;
         color: white;
       }
     }
 
     .bottom {
+      position: relative;
       flex: 1;
-      overflow-y: auto;
-      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+
+      > div {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        overflow-y: auto;
+        background-color: @gray-1;
+      }
+
+      .curTab {
+        z-index: 10;
+      }
     }
   }
 

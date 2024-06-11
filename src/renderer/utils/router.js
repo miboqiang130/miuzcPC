@@ -1,8 +1,13 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 
 const routes = [
-  { path: "/", component: () => import("@renderer/Music.vue") },
-  { path: "/Setting", component: () => import("@renderer/Setting.vue") },
+  {
+    path: "/",
+    children: [
+      { path: "/Music", component: () => import("@renderer/Music.vue") },
+      { path: "/Setting", component: () => import("@renderer/Setting.vue") },
+    ],
+  },
 ];
 
 // 3. 创建路由实例并传递 `routes` 配置

@@ -1,10 +1,5 @@
 import { defineConfig, mergeConfig } from "vite";
-import {
-  getBuildConfig,
-  getBuildDefine,
-  external,
-  pluginHotRestart,
-} from "./vite.base.config.mjs";
+import { getBuildConfig, getBuildDefine, external, pluginHotRestart } from "./vite.base.config.mjs";
 import path from "path";
 
 // https://vitejs.dev/config

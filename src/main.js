@@ -1,14 +1,15 @@
 import action from "@main/action";
-
-const { app, BrowserWindow, ipcMain } = require("electron");
-const path = require("node:path");
+import { app, BrowserWindow, ipcMain } from "electron";
+import path from "node:path";
+import auth from "@main/data/auth";
+import store from "@main/data/store";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
   app.quit();
 }
 
-const createWindow = () => {
+const createWindow = async () => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 900,
@@ -29,16 +30,12 @@ const createWindow = () => {
 
   mainWindow.webContents.openDevTools();
 
+  ipcMain.handle("default", (event, params) => action[params.type](params, mainWindow, event));
+
   // 请求拦截，添加请求头
-  mainWindow.webContents.session.webRequest.onBeforeRequest({ urls: ["*://*/*"], types: ["media"] }, (detail, cb) => {
-    console.log(detail);
-    detail.requestHeaders["X-User-Agent"] = "MIUZC";
-
-    cb({ cancel: false });
-  });
-
-  ipcMain.handle("default", (event, params) => {
-    return action[params.type](params, mainWindow, event);
+  mainWindow.webContents.session.webRequest.onBeforeSendHeaders({ urls: ["*://*/*"], types: ["media"] }, async (detail, cb) => {
+    const token = await auth.getToken();
+    cb({ cancel: false, requestHeaders: { ...detail.requestHeaders, "X-User-Agent": "MIUZC", token } });
   });
 };
 
@@ -46,6 +43,7 @@ const createWindow = () => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
+  store.load();
   createWindow();
 
   // On OS X it's common to re-create a window in the app when the
@@ -55,6 +53,11 @@ app.whenReady().then(() => {
       createWindow();
     }
   });
+});
+
+app.on("before-quit", () => {
+  // 关闭时保存用户数据
+  store.save();
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common

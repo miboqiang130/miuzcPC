@@ -1,10 +1,10 @@
 <template>
   <div id="audio-panel">
     <div class="top">
-      <PreviousSvg height="22" />
-      <PlaySvg v-show="store.audio.paused" height="30" @click="store.play()" />
+      <PreviousSvg height="22" @click="() => store.playNext(-1)" />
+      <PlaySvg v-show="store.audio.paused" height="30" @click="() => store.audio.play()" />
       <PauseSvg v-show="!store.audio.paused" height="30" @click="() => store.audio.pause()" />
-      <NextSvg height="22" />
+      <NextSvg height="22" @click="() => store.playNext(1)" />
     </div>
     <div class="bottom">
       <span>{{ store.formatProgress }}</span>
