@@ -9,7 +9,11 @@
     <MaximizeSvg v-else class="opt" @click="maximize" />
     <CloseSvg class="opt" @click="close" />
   </header>
-  <RouterView />
+  <router-view v-slot="{ Component }">
+    <keep-alive>
+      <component :is="Component" />
+    </keep-alive>
+  </router-view>
 </template>
 
 <script setup>

@@ -11,6 +11,7 @@ export default {
       return await axios.get(url, { params, ...config });
     } catch (e) {
       console.error(e);
+      return { status: -1, data: e };
     }
   },
 
@@ -20,42 +21,36 @@ export default {
       return axios.post(url, params);
     } catch (e) {
       console.error(e);
+      return { status: -1, data: e };
     }
   },
 
   // 音乐下载
   "net:download": ({ data: filename }) => {
     const setting = store.get("setting");
-    axios({
+    return axios({
       method: "get",
       url: "/music/" + filename,
       responseType: "stream",
-    })
-      .then(response => {
-        // 创建一个可写流来写入文件
-        const writer = fs.createWriteStream(path.resolve(setting.local, filename));
+    }).then(response => {
+      // 创建一个可写流来写入文件
+      const writer = fs.createWriteStream(path.resolve(setting.local, filename));
 
-        return new Promise((resolve, reject) => {
-          response.data.pipe(writer);
-          let error = null;
-          writer.on("error", err => {
-            error = err;
-            writer.close();
-            reject(err);
-          });
-          writer.on("close", () => {
-            if (!error) {
-              resolve(true);
-            }
-          });
+      return new Promise((resolve, reject) => {
+        response.data.pipe(writer);
+        let error = null;
+        writer.on("error", err => {
+          error = err;
+          writer.close();
+          reject(err);
         });
-      })
-      .then(() => {
-        console.log("file success save to ", dest);
-      })
-      .catch(error => {
-        console.error("catch error: ", error);
+        writer.on("close", () => {
+          if (!error) {
+            resolve(true);
+          }
+        });
       });
+    });
   },
 
   // 音乐上传
@@ -65,15 +60,13 @@ export default {
     const reader = fs.createReadStream(path.resolve(setting.local, filename));
     formData.append(filename, reader);
 
-    axios({
+    return axios({
       method: "POST",
       url: "/upload/music",
       headers: {
         "Content-Type": "multipart/form-data;",
       },
       data: formData,
-    }).catch(err => {
-      console.log("catch error: ", err);
     });
   },
 };

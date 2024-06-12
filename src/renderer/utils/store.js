@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { formatTime, getRandom } from "@renderer/utils/util";
 import api from "./api";
 import mime from "mime";
+import Notify from "@renderer/utils/notify";
 
 export const useStore = defineStore("default", {
   state: () => {
@@ -36,11 +37,11 @@ export const useStore = defineStore("default", {
           map.set(i.name, Object.assign({}, map.get(i.name), i));
         } else map.set(i.name, i);
       });
-      const rt = Array.from(map.values());
-      return rt.map(i => {
+      const rt = Array.from(map.values()).map(i => {
         i.showName = /(.*)\..*?$/.exec(i.name)[1];
         return i;
       });
+      return rt.sort((a, b) => (a.showName > b.showName ? 1 : -1));
     },
   },
   actions: {
@@ -52,7 +53,10 @@ export const useStore = defineStore("default", {
     // 获取云端音乐列表
     async getCloud() {
       if (this.setting.cloud && this.setting.cloudPw) {
-        api.getCloudMusicList().then(rsp => (this.cloudMusicList = rsp.data));
+        const rsp = await api.getCloudMusicList();
+        if (rsp?.status === 200) {
+          this.cloudMusicList = rsp.data;
+        } else this.cloudMusicList = [];
       }
     },
 
@@ -62,15 +66,16 @@ export const useStore = defineStore("default", {
       const audio = new Audio();
       audio.volume = Number(localStorage.getItem("volumn") || 1);
       audio.preload = "auto";
-      audio.onended = () => {
-        this.playNext();
-      };
       audio.ontimeupdate = () => {
         const f = this.audio.currentTime.toFixed(2);
         this.progress = parseFloat(f);
       };
-      audio.onerror = (a, b, c) => {
-        console.log(a, b, c);
+      audio.onended = () => {
+        this.playNext();
+      };
+      audio.onerror = err => {
+        Notify.err("播放失败");
+        console.error(err);
       };
       window.aaa = audio;
       this.audio = audio;

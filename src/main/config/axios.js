@@ -1,5 +1,7 @@
 import axios from "axios";
 import auth from "@main/data/auth";
+import ErrText from "@main/config/errText";
+import { BrowserWindow } from "electron";
 
 const instance = axios.create({
   headers: { "X-User-Agent": "MIUZC", "content-type": "application/x-www-form-urlencoded" },
@@ -20,16 +22,15 @@ instance.interceptors.request.use(
 
 instance.interceptors.response.use(
   function (response) {
-    // 2xx 范围内的状态码都会触发该函数。
-    // 对响应数据做点什么
-    return { status: response.status, statusText: response.statusText, data: response.data };
+    // 2xx 范围内的状态码都会触发该函数
+    return { status: response.status, data: response.data };
   },
   function (error) {
-    // 超出 2xx 范围的状态码都会触发该函数。
-    // 对响应错误做点什么
-    if (error.status === 401) {
-    }
-    return Promise.reject(error.code);
+    // 超出 2xx 范围的状态码都会触发该函数
+    console.log(error.code);
+    const mainWindow = BrowserWindow.fromId(1);
+    if (error.response) return { status: response.status, data: response.data };
+    else mainWindow.webContents.send("error", ErrText[error.code] || "未知错误");
   }
 );
 

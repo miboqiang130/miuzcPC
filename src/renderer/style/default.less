@@ -12,6 +12,17 @@ body {
   --el-color-primary: @pink;
 }
 
+@font-face {
+  font-family: jet;
+  src: url("@renderer/assets/fonts/JetBrainsMono-Regular.woff2");
+  font-weight: normal;
+}
+@font-face {
+  font-family: jet;
+  src: url("@renderer/assets/fonts/JetBrainsMono-Bold.woff2");
+  font-weight: bold;
+}
+
 #app {
   height: 100%;
   background-color: @background;
@@ -34,14 +45,6 @@ body {
     cursor: pointer;
   }
 
-  .btn {
-    display: inline-block;
-    cursor: pointer;
-    &:hover {
-      color: @pink;
-    }
-  }
-
   .margin-right-large {
     margin-right: 16px;
   }
@@ -54,5 +57,23 @@ body {
 
   .hide {
     display: none;
+  }
+}
+
+.notify {
+  padding: 4px 12px;
+  font-size: small;
+  bottom: 90px;
+  width: unset;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+  border: none;
+  background-color: @gray-3-5;
+
+  h2.el-notification__title {
+    font-size: 12px;
+  }
+
+  .el-icon svg {
+    height: 18px;
   }
 }

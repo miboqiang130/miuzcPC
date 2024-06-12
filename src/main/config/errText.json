@@ -1,0 +1,4 @@
+{
+  "EHOSTUNREACH": "访问云端失败",
+  "ETIMEDOUT": "请求超时"
+}

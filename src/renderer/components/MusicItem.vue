@@ -8,16 +8,16 @@
       <div></div>
     </div>
     <div class="music-item-opts" @click.stop>
-      <el-tooltip content="保存至本地" placement="top" effect="light">
+      <el-tooltip content="保存至本地" placement="top" effect="light" :show-arrow="false">
         <span><DownloadSvg v-if="curTab === 1 && !info.isLocal" height="18" @click="downloadMusic" /></span>
       </el-tooltip>
-      <el-tooltip content="上传至云端" placement="top" effect="light">
+      <el-tooltip content="上传至云端" placement="top" effect="light" :show-arrow="false">
         <span><UploadSvg v-if="curTab === 1 && !info.isCloud" height="18" @click="uploadMusic" /></span>
       </el-tooltip>
-      <el-tooltip content="添加到播放列表" placement="top" effect="light">
+      <el-tooltip content="添加到播放列表" placement="top" effect="light" :show-arrow="false">
         <span><AddToListSvg v-if="curTab === 1" height="18" @click="addToList" /></span>
       </el-tooltip>
-      <el-tooltip content="从播放列表中移除" placement="top" effect="light">
+      <el-tooltip content="从播放列表中移除" placement="top" effect="light" :show-arrow="false">
         <span><BinSvg v-if="curTab === 2" height="18" @click="removeFromList" /></span>
       </el-tooltip>
     </div>
@@ -30,6 +30,7 @@ import AddToListSvg from "@renderer/assets/imgs/add-to-list.svg";
 import BinSvg from "@renderer/assets/imgs/bin.svg";
 import DownloadSvg from "@renderer/assets/imgs/download.svg";
 import UploadSvg from "@renderer/assets/imgs/upload.svg";
+import Notify from "@renderer/utils/notify";
 
 const store = useStore();
 const { info, index, curTab } = defineProps(["info", "index", "curTab"]);
@@ -54,12 +55,24 @@ const removeFromList = () => {
 
 // 从云端下载音乐
 const downloadMusic = () => {
-  electron.exec("net:download", info.name);
+  electron
+    .exec("net:download", info.name)
+    .then(() => {
+      Notify.suc("下载成功");
+      store.getLocal();
+    })
+    .catch(error => {
+      Notify.err("下载失败");
+      console.error("catch error: ", error);
+    });
 };
 
 // 上传本地音乐至云端
 const uploadMusic = () => {
-  electron.exec("net:upload", info.name);
+  electron.exec("net:upload", info.name).catch(err => {
+    Notify.err("上传失败");
+    console.log("catch error: ", err);
+  });
 };
 </script>
 
@@ -81,7 +94,6 @@ const uploadMusic = () => {
   }
 
   &.active {
-    background: #ffffff18;
     color: @pink;
     font-weight: bold;
   }

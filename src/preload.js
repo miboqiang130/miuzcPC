@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld("application", {
   maximize: () => ipcRenderer.invoke("default", { type: "app:maximize" }),
   unmaximize: () => ipcRenderer.invoke("default", { type: "app:unmaximize" }),
   isMaximized: () => ipcRenderer.invoke("default", { type: "app:isMaximized" }),
+
+  onError: callback => ipcRenderer.on("error", (_event, value) => callback(value)),
 });
 
 contextBridge.exposeInMainWorld("electronLocal", {

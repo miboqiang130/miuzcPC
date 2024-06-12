@@ -12,6 +12,7 @@ if (require("electron-squirrel-startup")) {
 const createWindow = async () => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
+    id: 1,
     width: 900,
     height: 600,
     frame: false,

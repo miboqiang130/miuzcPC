@@ -6,6 +6,7 @@ import exJson from "@main/config/otherMusicType.json";
 import crypto from "crypto";
 import { dialog } from "electron";
 import store from "@main/data/store";
+import auth from "@main/data/auth";
 import axios from "@main/config/axios";
 
 export default {
@@ -45,5 +46,6 @@ export default {
   "local:setSetting": ({ data }) => {
     store.set("setting", data);
     axios.defaults.baseURL = data.cloud;
+    return auth.login();
   },
 };

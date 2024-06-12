@@ -28,6 +28,7 @@ import { useStore } from "@renderer/utils/store";
 import FolderSvg from "@renderer/assets/imgs/folder.svg";
 import CloudSvg from "@renderer/assets/imgs/cloud.svg";
 import PasswordSvg from "@renderer/assets/imgs/password.svg";
+import Notify from "@renderer/utils/notify";
 
 const store = useStore();
 const router = useRouter();
@@ -46,13 +47,30 @@ const back = () => {
 
 // 保存数据
 const save = async () => {
-  if (await formRef.value.validate()) {
-    store.setting = { ...formData.value };
-    electron.exec("local:setSetting", store.setting);
+  if (!(await formRef.value.validate())) return;
+  const loading = Notify.loading("连接云端中");
+  const oldSetting = { ...store.setting };
+  const newSetting = { ...formData.value };
+
+  // 保存新设置，并尝试登录云端
+  const code = await electron.exec("local:setSetting", newSetting);
+
+  loading.close();
+
+  if (code === 0) {
+    // 登录成功
+    store.setting = newSetting;
     store.getLocal();
     store.getCloud();
+
+    store.audio.pause();
+    store.audio.currentTime = 0;
+    store.curMusicList = [];
+    store.playingMusic = null;
+    store.lyric = "";
+
     router.push("/Music");
-  }
+  } else electron.exec("local:setSetting", oldSetting);
 };
 </script>
 

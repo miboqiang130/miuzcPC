@@ -6,11 +6,11 @@
         <div :class="{ active: curTab === 2 }" @click="curTab = 2">当前播放</div>
       </div>
       <div class="sub-top">
-        <div v-show="curTab === 1" class="btn" @click="playAll">
-          <PlaySvg height="16" class="icon-play" />
-          <span>播放全部</span>
-        </div>
-        <div v-show="curTab === 2" class="btn" @click="clean"><CleanSvg height="16" />清空</div>
+        <el-button v-if="curTab === 1" size="small" text bg :icon="PlaySvg" @click="playAll"> 播放全部 </el-button>
+        <el-button v-if="curTab === 2" size="small" text bg :icon="CleanSvg" @click="clean"> 清空 </el-button>
+        <!-- 
+        <div v-show="curTab === 1" @click="playAll"><PlaySvg height="16" /><span>播放全部</span></div>
+        <div v-show="curTab === 2" @click="clean"><CleanSvg height="16" /><span>清空</span></div> -->
       </div>
       <div class="bottom">
         <div :class="{ curTab: curTab === 1 }">
@@ -21,19 +21,24 @@
         </div>
       </div>
     </aside>
+
     <main>
       <Lyric />
     </main>
   </section>
+
   <footer>
     <MusicCoverSvg height="60" />
+
     <div class="music-info flex-1">
       <div class="top">{{ store.playingMusic?.showName || "-" }}</div>
       <div class="bottom"></div>
     </div>
+
     <div class="controlls">
       <audio-panel :class="{ disabled: store.curMusicList.length === 0 }" />
     </div>
+
     <div class="pink flex-1 right">
       <el-popover placement="top" trigger="click" :width="0" :show-arrow="false" popper-style="min-width:0;width:fit-content;padding:10px 0;">
         <template #reference>
@@ -112,7 +117,7 @@ section {
     .top {
       background-color: @gray-3-5;
       padding: 8px 10px 0;
-      font-family: monospace;
+      font-family: jet;
 
       > div {
         display: inline-block;
@@ -136,19 +141,6 @@ section {
       color: white;
       line-height: 40px;
       background-color: @gray-3;
-
-      .icon {
-        margin-right: 4px;
-        vertical-align: text-bottom;
-      }
-
-      .icon-play {
-        padding: 2px 8px 3px 7px;
-        background-color: @pink;
-        vertical-align: text-top;
-        border-radius: 10px;
-        color: white;
-      }
     }
 
     .bottom {
