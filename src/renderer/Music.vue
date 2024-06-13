@@ -28,11 +28,11 @@
   </section>
 
   <footer>
-    <MusicCoverSvg height="60" />
+    <img height="60" :src="store.cover" />
 
     <div class="music-info flex-1">
       <div class="top">{{ store.playingMusic?.showName || "-" }}</div>
-      <div class="bottom"></div>
+      <div class="bottom">{{ store.playingMusic?.info?.common?.artist || "" }}</div>
     </div>
 
     <div class="controlls">
@@ -55,13 +55,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, nextTick } from "vue";
 import MusicItem from "./components/MusicItem.vue";
 import AudioPanel from "./components/AudioPanel.vue";
 import Lyric from "./components/Lyric.vue";
 import { useStore } from "@renderer/utils/store";
 
-import MusicCoverSvg from "@renderer/assets/imgs/music-cover.svg";
 import PlaySvg from "@renderer/assets/imgs/play.svg";
 import PlayCycleSvg from "@renderer/assets/imgs/play-cycle.svg";
 import PlayRandomSvg from "@renderer/assets/imgs/play-random.svg";
@@ -85,6 +84,10 @@ const clean = () => {
   store.audio.src = "";
   store.curMusicList = [];
   store.playingMusic = null;
+  store.lyric = "";
+  nextTick(() => {
+    store.progress = 0;
+  });
 };
 
 // 音量改变
@@ -187,6 +190,7 @@ footer {
 
     .bottom {
       font-size: 12px;
+      color: lightslategray;
     }
   }
 

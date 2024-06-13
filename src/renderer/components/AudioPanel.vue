@@ -7,8 +7,8 @@
       <NextSvg height="22" @click="() => store.playNext(1)" />
     </div>
     <div class="bottom">
-      <span>{{ store.formatProgress }}</span>
-      <el-slider class="progress-bar" v-model="store.progress" :max="store.audio.duration" :format-tooltip="formatTime" @input="onInput" @change="onChange" />
+      <span>{{ formatTime(store.progress) }}</span>
+      <el-slider class="progress-bar" :modelValue="store.progress" :max="store.audio.duration || 1" :format-tooltip="formatTime" @input="onInput" @change="onChange" />
       <span>{{ formatTime(store.audio.duration) }}</span>
     </div>
   </div>

@@ -65,7 +65,7 @@ body {
   font-size: small;
   bottom: 90px;
   width: unset;
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+  box-shadow: @shadow;
   border: none;
   background-color: @gray-3-5;
 
@@ -76,4 +76,8 @@ body {
   .el-icon svg {
     height: 18px;
   }
+}
+
+.el-popover.el-popper {
+  box-shadow: @shadow;
 }

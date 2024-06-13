@@ -27,10 +27,12 @@ instance.interceptors.response.use(
   },
   function (error) {
     // 超出 2xx 范围的状态码都会触发该函数
-    console.log(error.code);
+    console.error(error.code);
     const mainWindow = BrowserWindow.fromId(1);
     if (error.response) return { status: response.status, data: response.data };
-    else mainWindow.webContents.send("error", ErrText[error.code] || "未知错误");
+
+    mainWindow.webContents.send("error", ErrText[error.code] || "未知错误");
+    return Promise.reject();
   }
 );
 

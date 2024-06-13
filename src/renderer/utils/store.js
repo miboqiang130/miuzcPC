@@ -1,8 +1,9 @@
 import { defineStore } from "pinia";
-import { formatTime, getRandom } from "@renderer/utils/util";
+import { getRandom } from "@renderer/utils/util";
 import api from "./api";
 import mime from "mime";
 import Notify from "@renderer/utils/notify";
+import MusicCoverSvg from "@renderer/assets/imgs/music-cover.svg?url";
 
 export const useStore = defineStore("default", {
   state: () => {
@@ -15,16 +16,13 @@ export const useStore = defineStore("default", {
       curMusicList: [], // 当前播放音乐的列表
 
       playingMusic: null, // 正在播放的音乐
-      progress: 0, // 已播放进度
+      progress: 0,
       lyric: "", // 歌词
 
       playMode: localStorage.getItem("playMode") || "cycle", // 循环播放，单个播放
     };
   },
   getters: {
-    // 格式化后的已播放时常
-    formatProgress: state => formatTime(state.progress),
-
     // 全部列表
     musicList: state => {
       // 避免本地和云端分别加载出来
@@ -43,11 +41,19 @@ export const useStore = defineStore("default", {
       });
       return rt.sort((a, b) => (a.showName > b.showName ? 1 : -1));
     },
+
+    // 专辑封面
+    cover: state => {
+      if (state.playingMusic?.info?.common?.picture?.length > 0) {
+        const p = state.playingMusic.info.common.picture[0];
+        return URL.createObjectURL(new Blob([p.data], { type: p.format }));
+      } else return MusicCoverSvg;
+    },
   },
   actions: {
     // 获取本地音乐列表
     getLocal() {
-      if (this.setting.local) electronLocal.getLocalMusicList(this.setting.local).then(rsp => (this.localMusicList = rsp));
+      if (this.setting.local) electronLocal.getLocalMusicList(this.setting.local).then(rsp => ((this.localMusicList = rsp), console.log(rsp)));
     },
 
     // 获取云端音乐列表
@@ -67,15 +73,10 @@ export const useStore = defineStore("default", {
       audio.volume = Number(localStorage.getItem("volumn") || 1);
       audio.preload = "auto";
       audio.ontimeupdate = () => {
-        const f = this.audio.currentTime.toFixed(2);
-        this.progress = parseFloat(f);
+        this.progress = this.audio.currentTime;
       };
       audio.onended = () => {
         this.playNext();
-      };
-      audio.onerror = err => {
-        Notify.err("播放失败");
-        console.error(err);
       };
       window.aaa = audio;
       this.audio = audio;

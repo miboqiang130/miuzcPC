@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import store from "@main/data/store";
 import FormData from "form-data";
+import auth from "@main/data/auth";
 
 export default {
   // get请求
@@ -68,5 +69,10 @@ export default {
       },
       data: formData,
     });
+  },
+
+  // 登录
+  "net:login": () => {
+    return auth.login();
   },
 };

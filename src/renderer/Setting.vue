@@ -22,7 +22,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onActivated } from "vue";
 import { useRouter } from "vue-router";
 import { useStore } from "@renderer/utils/store";
 import FolderSvg from "@renderer/assets/imgs/folder.svg";
@@ -33,7 +33,7 @@ import Notify from "@renderer/utils/notify";
 const store = useStore();
 const router = useRouter();
 
-const formData = ref(store.setting);
+const formData = ref({});
 const formRef = ref(null);
 
 const onFileInput = async () => {
@@ -53,7 +53,8 @@ const save = async () => {
   const newSetting = { ...formData.value };
 
   // 保存新设置，并尝试登录云端
-  const code = await electron.exec("local:setSetting", newSetting);
+  await electron.exec("local:setSetting", newSetting);
+  const code = await electron.exec("net:login");
 
   loading.close();
 
@@ -72,6 +73,10 @@ const save = async () => {
     router.push("/Music");
   } else electron.exec("local:setSetting", oldSetting);
 };
+
+onActivated(() => {
+  formData.value = { ...store.setting };
+});
 </script>
 
 <style lang="less" scoped>
