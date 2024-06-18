@@ -17,6 +17,7 @@ export const useStore = defineStore("default", {
 
       playingMusic: null, // 正在播放的音乐
       progress: 0,
+      volume: 0,
       lyric: "", // 歌词
 
       playMode: localStorage.getItem("playMode") || "cycle", // 循环播放，单个播放
@@ -70,16 +71,58 @@ export const useStore = defineStore("default", {
     audioInit() {
       // audio对象
       const audio = new Audio();
-      audio.volume = Number(localStorage.getItem("volumn") || 1);
       audio.preload = "auto";
+      // 进度更新时
       audio.ontimeupdate = () => {
-        this.progress = this.audio.currentTime;
+        this.progress = audio.currentTime;
       };
+      // 播放结束时
       audio.onended = () => {
         this.playNext();
       };
+      // 音量改变时，避免频繁调用localStorage
+      audio.onvolumechange = (() => {
+        let timeout;
+        return () => {
+          if (timeout) clearTimeout(timeout);
+          this.volume = audio.volume;
+          timeout = setTimeout(() => {
+            localStorage.setItem("volume", audio.volume);
+            timeout = null;
+          }, 1000);
+        };
+      })();
+
       window.aaa = audio;
+      audio.volume = Number(localStorage.getItem("volume") || 1);
       this.audio = audio;
+
+      // 快捷键
+      window.top.document.addEventListener("keydown", event => {
+        event.preventDefault();
+        switch (event.code) {
+          case "Space":
+            if (audio.paused) {
+              if (this.playingMusic) audio.play();
+              else if (this.curMusicList.length > 0) this.playMusic(this.curMusicList[0]);
+            } else audio.pause();
+            break;
+          case "ArrowUp":
+            if (audio.volume + 0.1 > 1) audio.volume = 1;
+            else audio.volume += 0.1;
+            break;
+          case "ArrowDown":
+            if (audio.volume - 0.1 < 0) audio.volume = 0;
+            else audio.volume -= 0.1;
+            break;
+          case "ArrowLeft":
+            this.playNext(-1);
+            break;
+          case "ArrowRight":
+            this.playNext();
+            break;
+        }
+      });
     },
 
     // 播放下一首

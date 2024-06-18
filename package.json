@@ -34,6 +34,8 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.10",
+    "@ffmpeg/util": "^0.12.1",
     "axios": "^1.6.8",
     "electron-squirrel-startup": "^1.0.1",
     "element-plus": "^2.7.3",

@@ -6,7 +6,20 @@
         <div :class="{ active: curTab === 2 }" @click="curTab = 2">当前播放</div>
       </div>
       <div class="sub-top">
-        <el-button v-if="curTab === 1" size="small" text bg :icon="PlaySvg" @click="playAll"> 播放全部 </el-button>
+        <template v-if="curTab === 1">
+          <el-button size="small" text bg :icon="PlaySvg" @click="playAll"> 播放全部 </el-button>
+          <el-button
+            size="small"
+            text
+            bg
+            :icon="RefreshSvg"
+            @click="
+              store.getCloud();
+              store.getLocal();
+            ">
+            刷新
+          </el-button>
+        </template>
         <el-button v-if="curTab === 2" size="small" text bg :icon="CleanSvg" @click="clean"> 清空 </el-button>
         <!-- 
         <div v-show="curTab === 1" @click="playAll"><PlaySvg height="16" /><span>播放全部</span></div>
@@ -44,8 +57,8 @@
         <template #reference>
           <VolumnSvg class="volumn margin-right-large" height="20" />
         </template>
-        <el-slider vertical height="80px" v-model="volumn" :show-tooltip="false" @change="volumnChange" />
-        <div class="volumn-label">{{ volumn }}</div>
+        <el-slider vertical height="80px" :model-value="store.volume" :max="1" :step="0.01" :show-tooltip="false" @input="volumnChange" />
+        <div class="volumn-label">{{ (store.volume * 100).toFixed(0) }}</div>
       </el-popover>
       <PlayCycleSvg v-show="store.playMode === 'cycle'" height="20" @click="onPlayModeChange" />
       <PlayRandomSvg v-show="store.playMode === 'random'" height="20" @click="onPlayModeChange" />
@@ -67,9 +80,9 @@ import PlayRandomSvg from "@renderer/assets/imgs/play-random.svg";
 import PlayOnceSvg from "@renderer/assets/imgs/play-once.svg";
 import VolumnSvg from "@renderer/assets/imgs/volumn.svg";
 import CleanSvg from "@renderer/assets/imgs/clean.svg";
+import RefreshSvg from "@renderer/assets/imgs/refresh.svg";
 
 const store = useStore();
-const volumn = ref(Number(localStorage.getItem("volumn") || 1) * 100); // 音量
 const curTab = ref(1);
 
 // 播放全部
@@ -92,9 +105,7 @@ const clean = () => {
 
 // 音量改变
 const volumnChange = value => {
-  const v = value / 100;
-  localStorage.setItem("volumn", v);
-  store.audio.volume = Number(v);
+  store.audio.volume = value;
 };
 
 // 播放模式改变时

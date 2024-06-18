@@ -40,7 +40,7 @@ const nowIndex = computed(() => {
 // 距离顶部
 const topPosition = computed(() => {
   const curNode = lyricContainer.value?.childNodes[nowIndex.value + 1] || { offsetTop: 0, offsetHeight: 0 };
-  return `calc(50% - ${curNode.offsetTop + curNode.offsetHeight / 2}px)`;
+  return `calc(50% - ${curNode.offsetTop + curNode.offsetHeight / 2 || 0}px)`;
 });
 </script>
 

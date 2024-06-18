@@ -2,6 +2,7 @@
   <header>
     <strong class="logo">MIUZC</strong>
 
+    <KeyboardSvg height="20" class="opt" @click="shortcut = true" />
     <SettingSvg height="16" class="opt" @click="router.push('/Setting')" />
     <el-divider direction="vertical" />
     <MinimizeSvg class="opt" @click="minimize" />
@@ -14,6 +15,33 @@
       <component :is="Component" />
     </keep-alive>
   </router-view>
+
+  <el-dialog v-model="shortcut" width="300" title="快捷键" shortcut-dialog class="shortcut-dialog" modal-class="shortcut-modal" :show-close="false" :draggable="true">
+    <table>
+      <tbody>
+        <tr>
+          <td>↑</td>
+          <td>音量+10</td>
+        </tr>
+        <tr>
+          <td>↓</td>
+          <td>音量-10</td>
+        </tr>
+        <tr>
+          <td>←</td>
+          <td>上一首</td>
+        </tr>
+        <tr>
+          <td>→</td>
+          <td>下一首</td>
+        </tr>
+        <tr>
+          <td>空格</td>
+          <td>暂停/播放</td>
+        </tr>
+      </tbody>
+    </table>
+  </el-dialog>
 </template>
 
 <script setup>
@@ -25,7 +53,9 @@ import UnmaximizeSvg from "@renderer/assets/imgs/unmaximize.svg";
 import MaximizeSvg from "@renderer/assets/imgs/maximize.svg";
 import CloseSvg from "@renderer/assets/imgs/close.svg";
 import SettingSvg from "@renderer/assets/imgs/setting.svg";
+import KeyboardSvg from "@renderer/assets/imgs/keyboard.svg";
 
+const shortcut = ref(false);
 const isMax = ref(false); // 窗口是否最大化
 const store = useStore();
 const router = useRouter();
@@ -37,8 +67,8 @@ electron.exec("local:getSetting").then(rsp => {
   store.setting = rsp || {};
   if (store.setting.local) {
     router.push("/Music");
-    store.getLocal();
     store.getCloud();
+    store.getLocal();
   } else router.push("/Setting");
 });
 
