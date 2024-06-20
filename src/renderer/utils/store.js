@@ -98,31 +98,30 @@ export const useStore = defineStore("default", {
       this.audio = audio;
 
       // 快捷键
-      false &&
-        window.top.document.addEventListener("keydown", event => {
-          switch (event.code) {
-            case "Space":
-              if (audio.paused) {
-                if (this.playingMusic) audio.play();
-                else if (this.curMusicList.length > 0) this.playMusic(this.curMusicList[0]);
-              } else audio.pause();
-              break;
-            case "ArrowUp":
-              if (audio.volume + 0.1 > 1) audio.volume = 1;
-              else audio.volume += 0.1;
-              break;
-            case "ArrowDown":
-              if (audio.volume - 0.1 < 0) audio.volume = 0;
-              else audio.volume -= 0.1;
-              break;
-            case "ArrowLeft":
-              this.playNext(-1);
-              break;
-            case "ArrowRight":
-              this.playNext();
-              break;
-          }
-        });
+      window.top.document.addEventListener("keydown", event => {
+        switch (event.code) {
+          case "Space":
+            if (audio.paused) {
+              if (this.playingMusic) audio.play();
+              else if (this.curMusicList.length > 0) this.playMusic(this.curMusicList[0]);
+            } else audio.pause();
+            break;
+          case "ArrowUp":
+            if (audio.volume + 0.1 > 1) audio.volume = 1;
+            else audio.volume += 0.1;
+            break;
+          case "ArrowDown":
+            if (audio.volume - 0.1 < 0) audio.volume = 0;
+            else audio.volume -= 0.1;
+            break;
+          case "ArrowLeft":
+            this.playNext(-1);
+            break;
+          case "ArrowRight":
+            this.playNext();
+            break;
+        }
+      });
     },
 
     // 播放下一首
