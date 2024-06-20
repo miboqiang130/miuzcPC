@@ -11,11 +11,13 @@
       <el-alert type="info" show-icon class="margin-bottom-20" :closable="false">
         <p>请先自行搭建相关云服务</p>
       </el-alert>
-      <el-form-item label="云服务地址"> <el-input v-model="formData.cloud" placeholder="请输入云服务地址，例如：http://192.168.0.1:5000" :prefix-icon="CloudSvg" :readonly="false" /></el-form-item>
-      <el-form-item label="云服务密码"> <el-input v-model="formData.cloudPw" placeholder="请输入云服务密码" type="password" :prefix-icon="PasswordSvg" :readonly="false" /></el-form-item>
+      <el-form-item label="云服务地址">
+        <el-input v-model="formData.cloud" placeholder="请输入云服务地址，例如：http://192.168.0.1:5000" clearable :prefix-icon="CloudSvg" :readonly="false" />
+      </el-form-item>
+      <el-form-item label="云服务密码"> <el-input v-model="formData.cloudPw" placeholder="请输入云服务密码" clearable type="password" :prefix-icon="PasswordSvg" :readonly="false" /></el-form-item>
     </el-form>
     <div class="btns">
-      <el-button v-show="formData.local" text bg @click="back"> 返回 </el-button>
+      <el-button v-show="store.setting.local" text bg @click="back"> 返回 </el-button>
       <el-button type="primary" text bg @click="save"> 保存 </el-button>
     </div>
   </div>
@@ -48,30 +50,45 @@ const back = () => {
 // 保存数据
 const save = async () => {
   if (!(await formRef.value.validate())) return;
-  const loading = Notify.loading("连接云端中");
   const oldSetting = { ...store.setting };
   const newSetting = { ...formData.value };
 
-  // 保存新设置，并尝试登录云端
-  await electron.exec("local:setSetting", newSetting);
-  const code = await electron.exec("net:login");
+  if (newSetting.cloud && newSetting.cloudPw) {
+    // 保存新设置，并尝试登录云端
+    await electron.exec("local:setSetting", newSetting);
+    const loading = Notify.loading("连接云端中");
+    // 尝试登录
+    const code = await electron.exec("net:login");
 
-  loading.close();
+    loading.close();
+    console.log(code);
+    if (code === 0) {
+      // 登录成功
+      store.setting = newSetting;
+      store.getLocal();
+      store.getCloud();
 
-  if (code === 0) {
-    // 登录成功
+      store.audio.pause();
+      store.audio.currentTime = 0;
+      store.curMusicList = [];
+      store.playingMusic = null;
+      store.lyric = "";
+
+      router.push("/Music");
+    } else {
+      Notify.err("登录失败！");
+      electron.exec("local:setSetting", oldSetting);
+    }
+  } else if (newSetting.cloud || newSetting.cloudPw) {
+    Notify.err("云服务地址或密码为空！");
+  } else {
+    await electron.exec("local:setSetting", newSetting);
+    // 只设置本地链接时
     store.setting = newSetting;
     store.getLocal();
     store.getCloud();
-
-    store.audio.pause();
-    store.audio.currentTime = 0;
-    store.curMusicList = [];
-    store.playingMusic = null;
-    store.lyric = "";
-
     router.push("/Music");
-  } else electron.exec("local:setSetting", oldSetting);
+  }
 };
 
 onActivated(() => {

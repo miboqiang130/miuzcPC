@@ -16,7 +16,7 @@
     </keep-alive>
   </router-view>
 
-  <el-dialog v-model="shortcut" width="300" title="快捷键" shortcut-dialog class="shortcut-dialog" modal-class="shortcut-modal" :show-close="false" :draggable="true">
+  <el-dialog v-model="shortcut" width="300" title="快捷键" shortcut-dialog class="shortcut-dialog" modal-class="shortcut-modal" :show-close="false" :draggable="true" :lock-scroll="false">
     <table>
       <tbody>
         <tr>

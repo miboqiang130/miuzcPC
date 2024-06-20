@@ -54,7 +54,7 @@ export const useStore = defineStore("default", {
   actions: {
     // 获取本地音乐列表
     getLocal() {
-      if (this.setting.local) electronLocal.getLocalMusicList(this.setting.local).then(rsp => ((this.localMusicList = rsp), console.log(rsp)));
+      if (this.setting.local) electronLocal.getLocalMusicList(this.setting.local).then(rsp => (this.localMusicList = rsp));
     },
 
     // 获取云端音乐列表
@@ -64,7 +64,7 @@ export const useStore = defineStore("default", {
         if (rsp?.status === 200) {
           this.cloudMusicList = rsp.data;
         } else this.cloudMusicList = [];
-      }
+      } else this.cloudMusicList = [];
     },
 
     // 播放对象初始化
