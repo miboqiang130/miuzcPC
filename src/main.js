@@ -3,6 +3,7 @@ import { app, BrowserWindow, ipcMain } from "electron";
 import path from "node:path";
 import auth from "@main/data/auth";
 import store from "@main/data/store";
+import icon from "@renderer/assets/icon/icon.ico";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
@@ -13,6 +14,7 @@ const createWindow = async () => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     id: 1,
+    icon,
     width: 900,
     height: 600,
     frame: false,
@@ -29,7 +31,7 @@ const createWindow = async () => {
     mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
   }
 
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 
   ipcMain.handle("default", (event, params) => action[params.type](params, mainWindow, event));
 

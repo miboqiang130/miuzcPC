@@ -21,9 +21,6 @@
           </el-button>
         </template>
         <el-button v-if="curTab === 2" size="small" text bg :icon="CleanSvg" @click="clean"> 清空 </el-button>
-        <!-- 
-        <div v-show="curTab === 1" @click="playAll"><PlaySvg height="16" /><span>播放全部</span></div>
-        <div v-show="curTab === 2" @click="clean"><CleanSvg height="16" /><span>清空</span></div> -->
       </div>
       <div class="bottom">
         <div :class="{ curTab: curTab === 1 }">

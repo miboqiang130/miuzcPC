@@ -11,18 +11,18 @@
       <el-alert type="info" show-icon class="margin-bottom-20" :closable="false">
         <p>请先自行搭建相关云服务</p>
       </el-alert>
-      <el-form-item label="云服务地址"><el-input v-model="formData.cloud" placeholder="请输入云服务地址，例如：http://192.168.0.1:5000" :prefix-icon="CloudSvg" /></el-form-item>
-      <el-form-item label="云服务密码"><el-input v-model="formData.cloudPw" placeholder="请输入云服务密码" type="password" :prefix-icon="PasswordSvg" /></el-form-item>
+      <el-form-item label="云服务地址"> <el-input v-model="formData.cloud" placeholder="请输入云服务地址，例如：http://192.168.0.1:5000" :prefix-icon="CloudSvg" :readonly="false" /></el-form-item>
+      <el-form-item label="云服务密码"> <el-input v-model="formData.cloudPw" placeholder="请输入云服务密码" type="password" :prefix-icon="PasswordSvg" :readonly="false" /></el-form-item>
     </el-form>
     <div class="btns">
-      <el-button v-show="store.setting.local" text bg @click="back"> 返回 </el-button>
+      <el-button v-show="formData.local" text bg @click="back"> 返回 </el-button>
       <el-button type="primary" text bg @click="save"> 保存 </el-button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onActivated } from "vue";
+import { ref, onActivated, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { useStore } from "@renderer/utils/store";
 import FolderSvg from "@renderer/assets/imgs/folder.svg";
