@@ -52,6 +52,11 @@ const save = async () => {
   if (!(await formRef.value.validate())) return;
   const oldSetting = { ...store.setting };
   const newSetting = { ...formData.value };
+  store.audio.pause();
+  store.audio.currentTime = 0;
+  store.curMusicList = [];
+  store.playingMusic = null;
+  store.lyric = "";
 
   if (newSetting.cloud && newSetting.cloudPw) {
     // 保存新设置，并尝试登录云端
@@ -61,19 +66,11 @@ const save = async () => {
     const code = await electron.exec("net:login");
 
     loading.close();
-    console.log(code);
     if (code === 0) {
       // 登录成功
       store.setting = newSetting;
       store.getLocal();
       store.getCloud();
-
-      store.audio.pause();
-      store.audio.currentTime = 0;
-      store.curMusicList = [];
-      store.playingMusic = null;
-      store.lyric = "";
-
       router.push("/Music");
     } else {
       Notify.err("登录失败！");

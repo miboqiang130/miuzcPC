@@ -50,6 +50,7 @@ export const useStore = defineStore("default", {
         return URL.createObjectURL(new Blob([p.data], { type: p.format }));
       } else return MusicCoverSvg;
     },
+    isCloudOk: state => state.setting.cloud && state.setting.cloudPw,
   },
   actions: {
     // 获取本地音乐列表
@@ -59,12 +60,18 @@ export const useStore = defineStore("default", {
 
     // 获取云端音乐列表
     async getCloud() {
-      if (this.setting.cloud && this.setting.cloudPw) {
+      if (this.isCloudOk) {
         const rsp = await api.getCloudMusicList();
         if (rsp?.status === 200) {
           this.cloudMusicList = rsp.data;
         } else this.cloudMusicList = [];
       } else this.cloudMusicList = [];
+    },
+
+    // 获取歌词
+    getLyric(name) {
+      this.lyric = "";
+      if (this.isCloudOk) api.getCloudLyric(name).then(rsp => (this.lyric = rsp.data));
     },
 
     // 播放对象初始化
@@ -163,9 +170,7 @@ export const useStore = defineStore("default", {
     async playMusic(item) {
       const { name, fullpath, isLocal } = item;
       let url;
-      // 获取歌词
-      this.lyric = "";
-      api.getCloudLyric(item.showName).then(rsp => (this.lyric = rsp.data));
+      this.getLyric(item.showName);
       // 是否存在在本地
       if (isLocal) {
         const buffer = await electronLocal.playMusic({ name, fullpath });
