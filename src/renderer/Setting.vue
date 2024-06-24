@@ -24,7 +24,7 @@
 </template>
 
 <script setup>
-import { ref, onActivated, reactive } from "vue";
+import { ref, onActivated } from "vue";
 import { useRouter } from "vue-router";
 import { useStore } from "@renderer/utils/store";
 import FolderSvg from "@renderer/assets/imgs/folder.svg";
@@ -38,6 +38,7 @@ const router = useRouter();
 const formData = ref({});
 const formRef = ref(null);
 
+// 选择本地音乐目录
 const onFileInput = async () => {
   const dirs = await electronLocal.openDir();
   if (dirs) formData.value.local = dirs[0];

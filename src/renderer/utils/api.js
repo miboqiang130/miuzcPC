@@ -3,6 +3,7 @@ export default {
   getCloudMusicList() {
     return electron.get("/music");
   },
+
   //获取远程歌词
   getCloudLyric(musicName) {
     const url = encodeURI("/lyric?name=" + musicName);

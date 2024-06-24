@@ -54,7 +54,7 @@
         <template #reference>
           <VolumnSvg class="volumn margin-right-large" height="20" />
         </template>
-        <el-slider vertical height="80px" :model-value="store.volume" :max="1" :step="0.01" :show-tooltip="false" @input="volumnChange" />
+        <el-slider class="mg-top-10" vertical height="80px" :model-value="store.volume" :max="1" :step="0.01" :show-tooltip="false" @input="volumnChange" />
         <div class="volumn-label">{{ (store.volume * 100).toFixed(0) }}</div>
       </el-popover>
       <PlayCycleSvg v-show="store.playMode === 'cycle'" height="20" @click="onPlayModeChange" />

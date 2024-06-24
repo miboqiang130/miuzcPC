@@ -17,7 +17,7 @@ export const useStore = defineStore("default", {
 
       playingMusic: null, // 正在播放的音乐
       progress: 0,
-      volume: 0,
+      volume: 1,
       lyric: "", // 歌词
 
       playMode: localStorage.getItem("playMode") || "cycle", // 循环播放，单个播放
