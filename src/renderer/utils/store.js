@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import { getRandom } from "@renderer/utils/util";
 import api from "./api";
-import mime from "mime";
 import Notify from "@renderer/utils/notify";
 import MusicCoverSvg from "@renderer/assets/imgs/music-cover.svg?url";
 
@@ -75,7 +74,7 @@ export const useStore = defineStore("default", {
     },
 
     // 播放对象初始化
-    audioInit() {
+    async audioInit() {
       // audio对象
       const audio = new Audio();
       audio.preload = "auto";
@@ -112,6 +111,7 @@ export const useStore = defineStore("default", {
               if (this.playingMusic) audio.play();
               else if (this.curMusicList.length > 0) this.playMusic(this.curMusicList[0]);
             } else audio.pause();
+            event.preventDefault();
             break;
           case "ArrowUp":
             if (audio.volume + 0.1 > 1) audio.volume = 1;
@@ -169,12 +169,13 @@ export const useStore = defineStore("default", {
     // 播放音乐
     async playMusic(item) {
       const { name, fullpath, isLocal } = item;
+
       let url;
       this.getLyric(item.showName);
       // 是否存在在本地
       if (isLocal) {
         const buffer = await electronLocal.playMusic({ name, fullpath });
-        const blob = new Blob([buffer], { type: mime.getType(name) });
+        const blob = new Blob([buffer], { type: "application/octet-stream" });
         url = URL.createObjectURL(blob);
       } else url = encodeURI(this.setting.cloud + "/music/" + item.name);
 

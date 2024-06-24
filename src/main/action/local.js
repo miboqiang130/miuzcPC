@@ -1,9 +1,6 @@
 import { parseFile } from "music-metadata";
 import path from "path";
 import fs from "fs";
-import mime from "mime-types";
-import exJson from "@main/config/otherMusicType.json";
-import crypto from "crypto";
 import { dialog } from "electron";
 import store from "@main/data/store";
 import axios from "@main/config/axios";
@@ -12,8 +9,7 @@ export default {
   "local:getLocalMusicList": async data => {
     const { data: MusicPath } = data;
     const list = fs.readdirSync(MusicPath).filter(i => {
-      const mm = mime.lookup(i);
-      let flag = fs.statSync(path.join(MusicPath, i)).isFile() && mm && mm.startsWith("audio"); // || new RegExp(`(${exJson.join("|")})$`).test(i);
+      let flag = fs.statSync(path.join(MusicPath, i)).isFile();
       return flag;
     });
 
