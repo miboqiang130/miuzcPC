@@ -19,8 +19,9 @@ const lyric = computed(() => {
   const rt = [];
   const reg = /^\[(\d{2}):(\d{2})\.(\d{2})\](.+)$/;
   store.lyric.split("\\n").forEach(i => {
-    if (reg.test(i)) {
-      const r = reg.exec(i);
+    const trim = i.trim();
+    if (reg.test(trim)) {
+      const r = reg.exec(trim);
       const second = Number(r[1]) * 60 + Number(r[2]);
       rt.push({
         timeStamp: `${second}.${r[3]}`,

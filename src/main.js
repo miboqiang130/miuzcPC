@@ -26,12 +26,11 @@ const createWindow = async () => {
   mainWindow.setMinimumSize(900, 600);
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    mainWindow.webContents.openDevTools();
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
     mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
   }
-
-  mainWindow.webContents.openDevTools();
 
   ipcMain.handle("default", (event, params) => action[params.type](params, mainWindow, event));
 

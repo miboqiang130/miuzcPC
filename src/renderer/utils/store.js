@@ -1,9 +1,11 @@
 import { defineStore } from "pinia";
 import { getRandom } from "@renderer/utils/util";
 import api from "./api";
-import mime from "mime";
 import Notify from "@renderer/utils/notify";
 import MusicCoverSvg from "@renderer/assets/imgs/music-cover.svg?url";
+import ffmpeg from "@renderer/utils/ffmpeg";
+import db from "@renderer/utils/indexedDB";
+import formats from "@renderer/assets/ffmpegwasm/formats.json";
 
 export const useStore = defineStore("default", {
   state: () => {
@@ -17,7 +19,7 @@ export const useStore = defineStore("default", {
 
       playingMusic: null, // 正在播放的音乐
       progress: 0,
-      volume: 0,
+      volume: 1,
       lyric: "", // 歌词
 
       playMode: localStorage.getItem("playMode") || "cycle", // 循环播放，单个播放
@@ -31,15 +33,11 @@ export const useStore = defineStore("default", {
       const map = new Map();
       state.localMusicList.forEach(i => map.set(i.name, i));
       state.cloudMusicList?.forEach(i => {
-        i.isCloud = true;
         if (map.has(i.name)) {
           map.set(i.name, Object.assign({}, map.get(i.name), i));
         } else map.set(i.name, i);
       });
-      const rt = Array.from(map.values()).map(i => {
-        i.showName = /(.*)\..*?$/.exec(i.name)[1];
-        return i;
-      });
+      const rt = Array.from(map.values());
       return rt.sort((a, b) => (a.showName > b.showName ? 1 : -1));
     },
 
@@ -50,6 +48,7 @@ export const useStore = defineStore("default", {
         return URL.createObjectURL(new Blob([p.data], { type: p.format }));
       } else return MusicCoverSvg;
     },
+    isCloudOk: state => state.setting.cloud && state.setting.cloudPw,
   },
   actions: {
     // 获取本地音乐列表
@@ -59,22 +58,38 @@ export const useStore = defineStore("default", {
 
     // 获取云端音乐列表
     async getCloud() {
-      if (this.setting.cloud && this.setting.cloudPw) {
+      if (this.isCloudOk) {
         const rsp = await api.getCloudMusicList();
         if (rsp?.status === 200) {
-          this.cloudMusicList = rsp.data;
+          const l = [];
+          rsp.data.forEach(i => {
+            const split = i.name.split(".");
+            const isChromeSupport = formats["chromeSupportFormats"].includes(split[1]);
+            l.push({ ...i, isChromeSupport, showName: split[0], isCloud: true });
+            return isChromeSupport || formats["ffmpegSupportDecodeFormats"].includes(split[1]);
+          });
+          this.cloudMusicList = l;
         } else this.cloudMusicList = [];
       } else this.cloudMusicList = [];
     },
 
+    // 获取歌词
+    getLyric(name) {
+      this.lyric = "";
+      if (this.isCloudOk) api.getCloudLyric(name).then(rsp => (this.lyric = rsp.data));
+    },
+
     // 播放对象初始化
-    audioInit() {
+    async audioInit() {
       // audio对象
       const audio = new Audio();
       audio.preload = "auto";
       // 进度更新时
       audio.ontimeupdate = () => {
         this.progress = audio.currentTime;
+      };
+      audio.onerror = (err, a, b) => {
+        console.log(err, a, b, err.type);
       };
       // 播放结束时
       audio.onended = () => {
@@ -105,6 +120,7 @@ export const useStore = defineStore("default", {
               if (this.playingMusic) audio.play();
               else if (this.curMusicList.length > 0) this.playMusic(this.curMusicList[0]);
             } else audio.pause();
+            event.preventDefault();
             break;
           case "ArrowUp":
             if (audio.volume + 0.1 > 1) audio.volume = 1;
@@ -144,7 +160,7 @@ export const useStore = defineStore("default", {
             const nextIndex = curIndex < 0 ? 0 : (len + curIndex + step) % len;
             this.playMusic(this.curMusicList[nextIndex]);
             break;
-          // 随机播放F
+          // 随机播放
           case "random":
             const newIndex = getRandom(len, curIndex);
             this.playMusic(this.curMusicList[newIndex]);
@@ -161,17 +177,45 @@ export const useStore = defineStore("default", {
 
     // 播放音乐
     async playMusic(item) {
-      const { name, fullpath, isLocal } = item;
+      const { name, fullpath, isLocal, isChromeSupport } = item;
+
       let url;
-      // 获取歌词
-      this.lyric = "";
-      api.getCloudLyric(item.showName).then(rsp => (this.lyric = rsp.data));
+      this.getLyric(item.showName);
       // 是否存在在本地
       if (isLocal) {
-        const buffer = await electronLocal.playMusic({ name, fullpath });
-        const blob = new Blob([buffer], { type: mime.getType(name) });
+        let buffer = await electronLocal.playMusic({ name, fullpath });
+
+        // 浏览器不支持时，使用ffmpeg解码
+        if (!isChromeSupport) {
+          // 判断是否有之前的解码
+          const result = await db.get(name);
+          if (result) {
+            buffer = result.buffer;
+          } else {
+            buffer = await ffmpeg.decodeAudio(name, buffer);
+            db.save({ name, buffer });
+          }
+        }
+        const blob = new Blob([buffer], { type: "application/octet-stream" });
         url = URL.createObjectURL(blob);
-      } else url = encodeURI(this.setting.cloud + "/music/" + item.name);
+      } else {
+        url = encodeURI(this.setting.cloud + "/music/" + item.name);
+
+        // 浏览器不支持时
+        if (!isChromeSupport) {
+          // 判断是否有之前的解码
+          const result = await db.get(name);
+          let buffer;
+          if (result) buffer = result.buffer;
+          else {
+            Notify.info("格式需转换，可能需要较长时间");
+            buffer = await ffmpeg.decodeAudioFromUrl(name, url);
+            db.save({ name, buffer });
+          }
+          const blob = new Blob([buffer], { type: "application/octet-stream" });
+          url = URL.createObjectURL(blob);
+        }
+      }
 
       this.playingMusic = item;
       this.audio.src = url;
