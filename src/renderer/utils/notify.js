@@ -8,6 +8,9 @@ export default {
   err(title) {
     ElNotification.error({ title, showClose: false, position: "bottom-right", customClass: "notify", offset: 80 });
   },
+  info(title) {
+    ElNotification.info({ title, showClose: false, position: "bottom-right", customClass: "notify", offset: 80 });
+  },
   loading(title, duration = 0) {
     return ElNotification({ title, showClose: false, position: "bottom-right", customClass: "notify", offset: 80, icon: LoadingSvg, duration });
   },

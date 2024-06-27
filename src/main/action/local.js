@@ -4,25 +4,30 @@ import fs from "fs";
 import { dialog } from "electron";
 import store from "@main/data/store";
 import axios from "@main/config/axios";
+import formats from "@renderer/assets/ffmpegwasm/formats.json";
 
 export default {
   "local:getLocalMusicList": async data => {
     const { data: MusicPath } = data;
-    const list = fs.readdirSync(MusicPath).filter(i => {
-      let flag = fs.statSync(path.join(MusicPath, i)).isFile();
-      return flag;
-    });
+    const list = fs.readdirSync(MusicPath);
 
     const rt = [];
     for (let value of list) {
+      const split = value.split(".");
+      const isFile = fs.statSync(path.join(MusicPath, value)).isFile();
       const fullpath = path.join(MusicPath, value);
       const info = await parseFile(fullpath);
-      rt.push({
-        name: value,
-        fullpath,
-        isLocal: true,
-        info,
-      });
+      const isChromeSupport = formats["chromeSupportFormats"].includes(split[1]);
+
+      if (isFile && (isChromeSupport || formats["ffmpegSupportDecodeFormats"].includes(split[1])))
+        rt.push({
+          name: value,
+          fullpath,
+          isLocal: true,
+          info,
+          showName: split[0],
+          isChromeSupport,
+        });
     }
     return rt;
   },
