@@ -13,27 +13,28 @@ export default {
 
     const rt = [];
     for (let value of list) {
-      const split = value.split(".");
+      const [filename, name, ext] = /(.*)\.(.*?)$/.exec(value);
       const isFile = fs.statSync(path.join(MusicPath, value)).isFile();
       const fullpath = path.join(MusicPath, value);
       const info = await parseFile(fullpath);
-      const isChromeSupport = formats["chromeSupportFormats"].includes(split[1]);
+      const isChromeSupport = formats["chromeSupportFormats"].includes(ext);
 
-      if (isFile && (isChromeSupport || formats["ffmpegSupportDecodeFormats"].includes(split[1])))
+      if (isFile && (isChromeSupport || formats["ffmpegSupportDecodeFormats"].includes(ext)))
         rt.push({
-          name: value,
+          name,
+          filename,
+          ext,
           fullpath,
           isLocal: true,
           info,
-          showName: split[0],
           isChromeSupport,
         });
     }
     return rt;
   },
-  "local:playMusic": ({ data: d }) => {
+  "local:getMusic": ({ data: fullpath }) => {
     return new Promise(res => {
-      fs.readFile(d.fullpath, (err, data) => {
+      fs.readFile(fullpath, (err, data) => {
         if (err) return;
         res(data);
       });

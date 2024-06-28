@@ -18,6 +18,5 @@ contextBridge.exposeInMainWorld("application", {
 
 contextBridge.exposeInMainWorld("electronLocal", {
   getLocalMusicList: data => ipcRenderer.invoke("default", { type: "local:getLocalMusicList", data }),
-  playMusic: data => ipcRenderer.invoke("default", { type: "local:playMusic", data }),
   openDir: () => ipcRenderer.invoke("default", { type: "local:openDir" }),
 });

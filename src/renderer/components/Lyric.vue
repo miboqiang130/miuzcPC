@@ -10,6 +10,7 @@
 <script setup>
 import { computed, ref } from "vue";
 import { useStore } from "@renderer/utils/store";
+import { audioAttr, play, pause, setCurrentTime } from "@renderer/utils/MiuzcAudio";
 
 const store = useStore();
 
@@ -34,7 +35,7 @@ const lyric = computed(() => {
 
 // 当前是哪句歌词
 const nowIndex = computed(() => {
-  const index = lyric.value.findIndex(i => i.timeStamp > store.progress);
+  const index = lyric.value.findIndex(i => i.timeStamp > audioAttr.currentTime);
   return (index > 0 ? index : lyric.value.length) - 1;
 });
 

@@ -48,6 +48,8 @@
 import { ref } from "vue";
 import { useStore } from "@renderer/utils/store";
 import { useRouter } from "vue-router";
+import * as audio from "@renderer/utils/MiuzcAudio";
+
 import MinimizeSvg from "@renderer/assets/imgs/minimize.svg?component";
 import UnmaximizeSvg from "@renderer/assets/imgs/unmaximize.svg";
 import MaximizeSvg from "@renderer/assets/imgs/maximize.svg";
@@ -60,15 +62,15 @@ const isMax = ref(false); // 窗口是否最大化
 const store = useStore();
 const router = useRouter();
 
-// 初始化音频对象
-store.audioInit();
-
 electron.exec("local:getSetting").then(rsp => {
   store.setting = rsp || {};
   if (store.setting.local) {
     router.push("/Music");
     store.getCloud();
     store.getLocal();
+    audio.on("ended", () => {
+      store.playNext();
+    });
   } else router.push("/Setting");
 });
 

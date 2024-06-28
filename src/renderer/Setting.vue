@@ -27,6 +27,7 @@
 import { ref, onActivated } from "vue";
 import { useRouter } from "vue-router";
 import { useStore } from "@renderer/utils/store";
+import { setCurrentTime, pause } from "@renderer/utils/MiuzcAudio";
 import FolderSvg from "@renderer/assets/imgs/folder.svg";
 import CloudSvg from "@renderer/assets/imgs/cloud.svg";
 import PasswordSvg from "@renderer/assets/imgs/password.svg";
@@ -53,8 +54,8 @@ const save = async () => {
   if (!(await formRef.value.validate())) return;
   const oldSetting = { ...store.setting };
   const newSetting = { ...formData.value };
-  store.audio.pause();
-  store.audio.currentTime = 0;
+  pause();
+  setCurrentTime(0);
   store.curMusicList = [];
   store.playingMusic = null;
   store.lyric = "";
