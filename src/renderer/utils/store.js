@@ -3,7 +3,7 @@ import { getRandom } from "@renderer/utils/util";
 import api from "./api";
 import Notify from "@renderer/utils/notify";
 import MusicCoverSvg from "@renderer/assets/imgs/music-cover.svg?url";
-import ffmpeg from "@renderer/utils/ffmpeg";
+import { decodeAudio } from "@renderer/utils/ffmpeg";
 import db from "@renderer/utils/indexedDB";
 import formats from "@renderer/assets/ffmpegwasm/formats.json";
 import * as audio from "@renderer/utils/MiuzcAudio";
@@ -118,47 +118,46 @@ export const useStore = defineStore("default", {
 
     // 播放音乐
     async playMusic(item) {
+      audio.stop();
       const { name, filename, fullpath, isLocal, isChromeSupport } = item;
 
       let url;
       this.getLyric(name);
 
-      // 是否存在在本地
-      if (isLocal) {
-        let buffer = await electron.exec("local:getMusic", fullpath);
+      if (!isChromeSupport) {
+        // 当浏览器不支持音频格式时
+        // 判断是否有之前的解码
+        const result = await db.get(filename);
+        let blob;
 
-        // 浏览器不支持时，使用ffmpeg解码
-        if (!isChromeSupport) {
-          // 判断是否有之前的解码
-          const result = await db.get(filename);
-          if (result) {
-            buffer = result.buffer;
-          } else {
-            buffer = await ffmpeg.decodeAudio(filename, buffer);
-            db.save({ name: filename, buffer });
-          }
-        }
-        const blob = new Blob([buffer], { type: "application/octet-stream" });
-        url = URL.createObjectURL(blob);
-      } else {
-        url = encodeURI(this.setting.cloud + "/music/" + filename);
-
-        // 浏览器不支持时
-        if (!isChromeSupport) {
-          // 判断是否有之前的解码
-          const result = await db.get(filename);
+        if (result) blob = result.blob;
+        else {
           let buffer;
-          if (result) buffer = result.buffer;
+          if (isLocal) buffer = await electron.exec("local:getMusic", fullpath);
           else {
             Notify.info("格式需转换，首次播放可能需要较长时间");
-            buffer = await ffmpeg.decodeAudioFromUrl(filename, url);
-            db.save({ name: filename, buffer });
+            buffer = (await electron.get(encodeURI(this.setting.cloud + "/music/" + filename), null, { responseType: "arraybuffer" })).data;
           }
+
+          // 解码音频
+          buffer = await decodeAudio(filename, buffer);
+          blob = new Blob([buffer], { type: "application/octet-stream" });
+
+          // 解码后数据存到indexedDB
+          db.save({ id: filename, blob });
+        }
+
+        url = URL.createObjectURL(blob);
+      } else {
+        // 浏览器支持格式时
+        if (isLocal) {
+          let buffer = await electron.exec("local:getMusic", fullpath);
           const blob = new Blob([buffer], { type: "application/octet-stream" });
           url = URL.createObjectURL(blob);
-        }
+        } else url = encodeURI(this.setting.cloud + "/music/" + filename);
       }
 
+      if (!audio.getAudioPaused()) return;
       this.playingMusic = item;
       audio.play(url);
     },

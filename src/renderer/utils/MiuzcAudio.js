@@ -1,4 +1,4 @@
-import { reactive } from "vue";
+import { reactive, readonly } from "vue";
 
 const react = reactive({
   status: "none", // 状态。none：空 | waiting：加载中 | playing：播放中 | pause：暂停
@@ -6,6 +6,7 @@ const react = reactive({
   currentTime: 0, // 当前播放时间
   duration: 0, // 总时长
 });
+const audioAttr = readonly(react);
 const audio = new Audio();
 
 audio.preload = "auto";
@@ -34,10 +35,6 @@ audio.ontimeupdate = () => {
   react.currentTime = audio.currentTime;
 };
 
-// 发生错误时
-audio.onerror = err => {
-  console.log(err);
-};
 // 音量改变时，避免频繁调用localStorage
 audio.onvolumechange = (() => {
   let timeout;
@@ -52,7 +49,7 @@ audio.onvolumechange = (() => {
 })();
 
 // 属性
-export { react as audioAttr };
+export { audioAttr };
 
 // 播放
 export const play = src => {
@@ -73,6 +70,7 @@ export const pause = () => {
 
 // 停止播放
 export const stop = () => {
+  react.duration = 0;
   audio.src = "";
 };
 
@@ -95,3 +93,5 @@ export const on = (name, cb) => {
 export const off = (name, cb) => {
   audio.removeEventListener(name, cb);
 };
+
+export const getAudioPaused = () => audio.paused;

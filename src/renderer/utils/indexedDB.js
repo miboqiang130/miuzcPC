@@ -14,7 +14,7 @@ openDB.onerror = () => {
 openDB.onupgradeneeded = e => {
   const db = e.target.result;
   if (!db.objectStoreNames.contains("audioList")) {
-    db.createObjectStore("audioList", { keyPath: "name" });
+    db.createObjectStore("audioList", { keyPath: "id" });
   }
 };
 
