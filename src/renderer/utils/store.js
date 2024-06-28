@@ -6,20 +6,18 @@ import MusicCoverSvg from "@renderer/assets/imgs/music-cover.svg?url";
 import ffmpeg from "@renderer/utils/ffmpeg";
 import db from "@renderer/utils/indexedDB";
 import formats from "@renderer/assets/ffmpegwasm/formats.json";
+import * as audio from "@renderer/utils/MiuzcAudio";
 
 export const useStore = defineStore("default", {
   state: () => {
     return {
       setting: {},
-      audio: null, // 音频对象
 
       localMusicList: [], // 本地音乐
       cloudMusicList: null, // 云上音乐
       curMusicList: [], // 当前播放音乐的列表
 
       playingMusic: null, // 正在播放的音乐
-      progress: 0,
-      volume: 1,
       lyric: "", // 歌词
 
       playMode: localStorage.getItem("playMode") || "cycle", // 循环播放，单个播放
@@ -38,7 +36,7 @@ export const useStore = defineStore("default", {
         } else map.set(i.name, i);
       });
       const rt = Array.from(map.values());
-      return rt.sort((a, b) => (a.showName > b.showName ? 1 : -1));
+      return rt.sort((a, b) => (a.name > b.name ? 1 : -1));
     },
 
     // 专辑封面
@@ -49,6 +47,9 @@ export const useStore = defineStore("default", {
       } else return MusicCoverSvg;
     },
     isCloudOk: state => state.setting.cloud && state.setting.cloudPw,
+  },
+  setup() {
+    console.log("yes");
   },
   actions: {
     // 获取本地音乐列表
@@ -63,10 +64,11 @@ export const useStore = defineStore("default", {
         if (rsp?.status === 200) {
           const l = [];
           rsp.data.forEach(i => {
-            const split = i.name.split(".");
-            const isChromeSupport = formats["chromeSupportFormats"].includes(split[1]);
-            l.push({ ...i, isChromeSupport, showName: split[0], isCloud: true });
-            return isChromeSupport || formats["ffmpegSupportDecodeFormats"].includes(split[1]);
+            const [filename, name, ext] = /(.*)\.(.*?)$/.exec(i.name);
+            const isChromeSupport = formats["chromeSupportFormats"].includes(ext);
+            if (isChromeSupport || formats["ffmpegSupportDecodeFormats"].includes(ext)) {
+              l.push({ name, filename, ext, isChromeSupport, isCloud: true });
+            }
           });
           this.cloudMusicList = l;
         } else this.cloudMusicList = [];
@@ -79,67 +81,6 @@ export const useStore = defineStore("default", {
       if (this.isCloudOk) api.getCloudLyric(name).then(rsp => (this.lyric = rsp.data));
     },
 
-    // 播放对象初始化
-    async audioInit() {
-      // audio对象
-      const audio = new Audio();
-      audio.preload = "auto";
-      // 进度更新时
-      audio.ontimeupdate = () => {
-        this.progress = audio.currentTime;
-      };
-      audio.onerror = (err, a, b) => {
-        console.log(err, a, b, err.type);
-      };
-      // 播放结束时
-      audio.onended = () => {
-        this.playNext();
-      };
-      // 音量改变时，避免频繁调用localStorage
-      audio.onvolumechange = (() => {
-        let timeout;
-        return () => {
-          if (timeout) clearTimeout(timeout);
-          this.volume = audio.volume;
-          timeout = setTimeout(() => {
-            localStorage.setItem("volume", audio.volume);
-            timeout = null;
-          }, 1000);
-        };
-      })();
-
-      window.aaa = audio;
-      audio.volume = Number(localStorage.getItem("volume") || 1);
-      this.audio = audio;
-
-      // 快捷键
-      window.top.document.addEventListener("keydown", event => {
-        switch (event.code) {
-          case "Space":
-            if (audio.paused) {
-              if (this.playingMusic) audio.play();
-              else if (this.curMusicList.length > 0) this.playMusic(this.curMusicList[0]);
-            } else audio.pause();
-            event.preventDefault();
-            break;
-          case "ArrowUp":
-            if (audio.volume + 0.1 > 1) audio.volume = 1;
-            else audio.volume += 0.1;
-            break;
-          case "ArrowDown":
-            if (audio.volume - 0.1 < 0) audio.volume = 0;
-            else audio.volume -= 0.1;
-            break;
-          case "ArrowLeft":
-            this.playNext(-1);
-            break;
-          case "ArrowRight":
-            this.playNext();
-            break;
-        }
-      });
-    },
-
     // 播放下一首
     playNext(step = 1) {
       try {
@@ -147,7 +88,7 @@ export const useStore = defineStore("default", {
 
         if (len === 0) throw new Error("播放列表为空");
         else if (len === 1) {
-          this.audio.play();
+          audio.play();
           return;
         }
 
@@ -167,7 +108,7 @@ export const useStore = defineStore("default", {
             break;
           // 单曲循环
           case "once":
-            this.audio.play();
+            audio.play();
             break;
         }
       } catch (e) {
@@ -177,40 +118,41 @@ export const useStore = defineStore("default", {
 
     // 播放音乐
     async playMusic(item) {
-      const { name, fullpath, isLocal, isChromeSupport } = item;
+      const { name, filename, fullpath, isLocal, isChromeSupport } = item;
 
       let url;
-      this.getLyric(item.showName);
+      this.getLyric(name);
+
       // 是否存在在本地
       if (isLocal) {
-        let buffer = await electronLocal.playMusic({ name, fullpath });
+        let buffer = await electron.exec("local:getMusic", fullpath);
 
         // 浏览器不支持时，使用ffmpeg解码
         if (!isChromeSupport) {
           // 判断是否有之前的解码
-          const result = await db.get(name);
+          const result = await db.get(filename);
           if (result) {
             buffer = result.buffer;
           } else {
-            buffer = await ffmpeg.decodeAudio(name, buffer);
-            db.save({ name, buffer });
+            buffer = await ffmpeg.decodeAudio(filename, buffer);
+            db.save({ name: filename, buffer });
           }
         }
         const blob = new Blob([buffer], { type: "application/octet-stream" });
         url = URL.createObjectURL(blob);
       } else {
-        url = encodeURI(this.setting.cloud + "/music/" + item.name);
+        url = encodeURI(this.setting.cloud + "/music/" + filename);
 
         // 浏览器不支持时
         if (!isChromeSupport) {
           // 判断是否有之前的解码
-          const result = await db.get(name);
+          const result = await db.get(filename);
           let buffer;
           if (result) buffer = result.buffer;
           else {
-            Notify.info("格式需转换，可能需要较长时间");
-            buffer = await ffmpeg.decodeAudioFromUrl(name, url);
-            db.save({ name, buffer });
+            Notify.info("格式需转换，首次播放可能需要较长时间");
+            buffer = await ffmpeg.decodeAudioFromUrl(filename, url);
+            db.save({ name: filename, buffer });
           }
           const blob = new Blob([buffer], { type: "application/octet-stream" });
           url = URL.createObjectURL(blob);
@@ -218,8 +160,7 @@ export const useStore = defineStore("default", {
       }
 
       this.playingMusic = item;
-      this.audio.src = url;
-      this.audio.play();
+      audio.play(url);
     },
   },
 });

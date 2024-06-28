@@ -3,7 +3,7 @@
     <div class="index">{{ index + 1 }}</div>
     <div class="flex-1">
       <div class="text-hidden">
-        {{ info.showName || info.name }}
+        {{ info.name || info.name }}
       </div>
       <div></div>
     </div>
@@ -31,6 +31,7 @@ import BinSvg from "@renderer/assets/imgs/bin.svg";
 import DownloadSvg from "@renderer/assets/imgs/download.svg";
 import UploadSvg from "@renderer/assets/imgs/upload.svg";
 import Notify from "@renderer/utils/notify";
+import { stop } from "@renderer/utils/MiuzcAudio";
 
 const store = useStore();
 const { info, index, curTab } = defineProps(["info", "index", "curTab"]);
@@ -47,7 +48,7 @@ const addToList = () => {
 
 const removeFromList = () => {
   if (store.curMusicList.length === 0) {
-    store.audio.src = "";
+    stop();
     store.playingMusic = null;
   } else if (store.playingMusic.name === info.name) store.playNext();
   store.curMusicList = store.curMusicList.filter(i => i.name !== info.name);

@@ -41,7 +41,7 @@
     <img height="60" :src="store.cover" />
 
     <div class="music-info flex-1">
-      <div class="top">{{ store.playingMusic?.showName || "-" }}</div>
+      <div class="top">{{ store.playingMusic?.name || "-" }}</div>
       <div class="bottom">{{ store.playingMusic?.info?.common?.artist || "" }}</div>
     </div>
 
@@ -54,8 +54,8 @@
         <template #reference>
           <VolumnSvg class="volumn margin-right-large" height="20" />
         </template>
-        <el-slider class="mg-top-10" vertical height="80px" :model-value="store.volume" :max="1" :step="0.01" :show-tooltip="false" @input="volumnChange" />
-        <div class="volumn-label">{{ (store.volume * 100).toFixed(0) }}</div>
+        <el-slider class="mg-top-10" vertical height="80px" :model-value="audioAttr.volume" :max="1" :step="0.01" :show-tooltip="false" @input="setVolume" />
+        <div class="volumn-label">{{ (audioAttr.volume * 100).toFixed(0) }}</div>
       </el-popover>
       <PlayCycleSvg v-show="store.playMode === 'cycle'" height="20" @click="onPlayModeChange" />
       <PlayRandomSvg v-show="store.playMode === 'random'" height="20" @click="onPlayModeChange" />
@@ -65,11 +65,13 @@
 </template>
 
 <script setup>
+import "@renderer/utils/keymap";
 import { ref, nextTick } from "vue";
+import { useStore } from "@renderer/utils/store";
+import { setVolume, stop, audioAttr } from "@renderer/utils/MiuzcAudio";
 import MusicItem from "./components/MusicItem.vue";
 import AudioPanel from "./components/AudioPanel.vue";
 import Lyric from "./components/Lyric.vue";
-import { useStore } from "@renderer/utils/store";
 
 import PlaySvg from "@renderer/assets/imgs/play.svg";
 import PlayCycleSvg from "@renderer/assets/imgs/play-cycle.svg";
@@ -91,18 +93,10 @@ const playAll = () => {
 
 // 清空
 const clean = () => {
-  store.audio.src = "";
+  stop();
   store.curMusicList = [];
   store.playingMusic = null;
   store.lyric = "";
-  nextTick(() => {
-    store.progress = 0;
-  });
-};
-
-// 音量改变
-const volumnChange = value => {
-  store.audio.volume = value;
 };
 
 // 播放模式改变时
