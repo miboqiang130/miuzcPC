@@ -22,8 +22,9 @@ const createWindow = async () => {
       preload: path.join(__dirname, "preload.js"),
     },
   });
-  // 窗口最小大小
+  // 窗口设置
   mainWindow.setMinimumSize(900, 600);
+  mainWindow.setBackgroundColor("#252525");
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.webContents.openDevTools();
