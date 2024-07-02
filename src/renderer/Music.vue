@@ -66,7 +66,7 @@
 
 <script setup>
 import "@renderer/utils/keymap";
-import { ref, nextTick } from "vue";
+import { ref } from "vue";
 import { useStore } from "@renderer/utils/store";
 import { setVolume, stop, audioAttr } from "@renderer/utils/MiuzcAudio";
 import MusicItem from "./components/MusicItem.vue";
